@@ -1,0 +1,17 @@
+{
+    "name": "phpredeye/phpfox-router",
+    "description": "PhpFox Router Component",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Nam Nguyen",
+            "email": "nam.ngvan@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Phpfox\\Router\\": "src/"
+        }
+    },
+    "require": {}
+}
