@@ -1,6 +1,6 @@
 <?php
 
-namespace Phpfox\Router;
+namespace Phpfox\RouteManager;
 
 return [
     'factories' => [

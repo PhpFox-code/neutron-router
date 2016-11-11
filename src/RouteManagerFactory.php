@@ -1,11 +1,11 @@
 <?php
 
-namespace Phpfox\Router;
+namespace Phpfox\RouteManager;
 
 /**
  * Class RouteManagerFactory
  *
- * @package Phpfox\Router
+ * @package Phpfox\RouteManager
  */
 class RouteManagerFactory
 {
