@@ -12,8 +12,12 @@
   "minimum-stability": "dev",
   "autoload": {
     "psr-4": {
-      "Phpfox\\Router\\": "src/"
+      "Phpfox\\RouteManager\\": "src/"
     }
   },
-  "require": {}
+  "autoload-dev": {
+    "psr-4": {
+      "Phpfox\\RouteManager\\": "test/"
+    }
+  }
 }
