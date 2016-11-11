@@ -60,27 +60,30 @@ class RouteManager
     /**
      * @ignore
      */
-    private function compileRoutes()
+    public function compileRoutes()
     {
         $this->masters = [];
         $this->children = [];
 
         // clone delegate children data
-        foreach ($this->temporary['delegate'] as $name => $delegate) {
-            $combine = [];
+        if (!empty($this->temporary['delegate'])) {
+            foreach ($this->temporary['delegate'] as $name => $delegate) {
+                $combine = [];
 
-            if (!empty($this->temporary['children'][$name])) {
-                $combine = $this->temporary['children'][$name];
+                if (!empty($this->temporary['children'][$name])) {
+                    $combine = $this->temporary['children'][$name];
+                }
+
+                if (!empty($this->temporary['children'][$delegate])) {
+                    $combine = array_merge($combine,
+                        $this->temporary['children'][$delegate]);
+
+                }
+                $this->temporary['children'][$name] = $combine;
+                $this->temporary['children'][$delegate] = $combine;
             }
-
-            if (!empty($this->temporary['children'][$delegate])) {
-                $combine = array_merge($combine,
-                    $this->temporary['children'][$delegate]);
-
-            }
-            $this->temporary['children'][$name] = $combine;
-            $this->temporary['children'][$delegate] = $combine;
         }
+
 
         /**
          * add children
@@ -94,18 +97,21 @@ class RouteManager
 
         // re-merged all data for children
 
-        foreach ($this->temporary['children'] as $group => $children) {
-            if (empty($this->temporary['master'][$group])) {
-                throw new \InvalidArgumentException(sprintf('Unexpected group "%s", Could not compile children',
-                    $group));
-            }
-            $master = $this->temporary['master'][$group];
-            foreach ($children as $name => $child) {
-                $this->temporary['children'][$group][$name]
-                    = $this->correctChildData($child, $master);
-                $this->indexes[$group][] = $group . '/' . $name;
+        if (!empty($this->temporary['children'])) {
+            foreach ($this->temporary['children'] as $group => $children) {
+                if (empty($this->temporary['master'][$group])) {
+                    throw new \InvalidArgumentException(sprintf('Unexpected group "%s", Could not compile children',
+                        $group));
+                }
+                $master = $this->temporary['master'][$group];
+                foreach ($children as $name => $child) {
+                    $this->temporary['children'][$group][$name]
+                        = $this->correctChildData($child, $master);
+                    $this->indexes[$group][] = $group . '/' . $name;
+                }
             }
         }
+
 
         /**
          * Initial we create master rules
@@ -114,12 +120,15 @@ class RouteManager
             $this->masters[$master['name']] = $this->create($master);
         }
 
-        foreach ($this->temporary['children'] as $group => $children) {
-            foreach ($children as $name => $child) {
-                $key = $group . '/' . $name;
-                $this->children[$key] = $this->create($child);
+        if (!empty($this->temporary['children'])) {
+            foreach ($this->temporary['children'] as $group => $children) {
+                foreach ($children as $name => $child) {
+                    $key = $group . '/' . $name;
+                    $this->children[$key] = $this->create($child);
+                }
             }
         }
+
         unset($this->temporary);
     }
 
@@ -202,18 +211,7 @@ class RouteManager
      */
     protected function create($params)
     {
-        if (!is_array($params)) {
-            throw new \InvalidArgumentException("Invalid params "
-                . var_export($params, 1));
-        }
-        $class = null;
-        switch (true) {
-            case !empty($params['class']):
-                $class = $params['class'];
-                break;
-            default:
-                $class = 'Phpfox\Router\StandardRoute';
-        }
+        $class = empty($params['class'])?StandardRoute::class: $params['class'];
 
         return new $class($params);
     }
@@ -234,11 +232,12 @@ class RouteManager
      * @param string $group
      * @param string $uri
      * @param string $host
+     * @param string $method
      * @param Result $result
      *
      * @return bool
      */
-    public function resolveChildren($group, $uri, $host, Result $result)
+    public function resolveChildren($group, $uri, $host, $method, $result)
     {
         if (empty($this->indexes[$group])) {
             return false;
@@ -250,7 +249,9 @@ class RouteManager
                 continue;
             }
 
-            if ($this->children[$name]->resolve($uri, $host, $result, true)) {
+            if ($this->children[$name]->resolve($uri, $host, $method, $result,
+                true)
+            ) {
                 return true;
             }
 

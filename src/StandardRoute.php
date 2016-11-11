@@ -55,10 +55,6 @@ class StandardRoute implements RouteInterface
      */
     public function __construct($params)
     {
-        if (empty($params['name'])) {
-            throw new \InvalidArgumentException("Unexpected route name");
-        }
-
         $this->name = $params['name'];
 
         if (isset($params['uri'])) {
