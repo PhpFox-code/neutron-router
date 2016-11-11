@@ -2,6 +2,7 @@
   "name": "codelego/phpfox-router",
   "description": "PhpFox Router Component",
   "type": "library",
+  "license": "MIT",
   "authors": [
     {
       "name": "Nam Nguyen",
