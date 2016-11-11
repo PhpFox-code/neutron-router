@@ -1,10 +1,29 @@
 <?php
 namespace Phpfox\Router;
 
-
 interface RouteInterface
 {
-    public function match();
+    /**
+     * @param string $uri
+     * @param string $host
+     * @param string $method
+     * @param Result $result
+     * @param bool   $is_children
+     *
+     * @return mixed
+     */
+    public function resolve(
+        $uri,
+        $host = null,
+        $method = null,
+        $result,
+        $is_children = false
+    );
 
-    public function compile();
+    /**
+     * @param array $params
+     *
+     * @return string
+     */
+    public function getUrl($params = []);
 }
