@@ -1,6 +1,6 @@
 {
   "name": "codelego/phpfox-router",
-  "description": "Route manager library for PhpFox framework",
+  "description": "Router library for phpfox framework",
   "type": "library",
   "license": "MIT",
   "authors": [
