@@ -1,10 +1,10 @@
 <?php
-namespace Phpfox\RouteManager;
+namespace Phpfox\Router;
 
 /**
  * Class Result
  *
- * @package Phpfox\RouteManager
+ * @package Phpfox\Router
  */
 class Result
 {

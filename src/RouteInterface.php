@@ -1,5 +1,5 @@
 <?php
-namespace Phpfox\RouteManager;
+namespace Phpfox\Router;
 
 interface RouteInterface
 {

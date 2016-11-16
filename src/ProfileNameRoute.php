@@ -1,12 +1,12 @@
 <?php
-namespace Phpfox\RouteManager;
+namespace Phpfox\Router;
 
 use Phpfox\Mvc\App;
 
 /**
  * Class ProfileNameRoute
  *
- * @package Phpfox\RouteManager
+ * @package Phpfox\Router
  */
 class ProfileNameRoute extends StandardRoute
 {

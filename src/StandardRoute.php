@@ -1,6 +1,6 @@
 <?php
 
-namespace Phpfox\RouteManager;
+namespace Phpfox\Router;
 
 
 class StandardRoute implements RouteInterface
