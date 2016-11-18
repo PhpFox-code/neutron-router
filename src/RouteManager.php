@@ -211,7 +211,8 @@ class RouteManager
      */
     protected function create($params)
     {
-        $class = empty($params['class'])?StandardRoute::class: $params['class'];
+        $class = empty($params['class']) ? StandardRoute::class
+            : $params['class'];
 
         return new $class($params);
     }

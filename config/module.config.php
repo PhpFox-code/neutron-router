@@ -3,7 +3,7 @@
 namespace Phpfox\Router;
 
 return [
-    'factories' => [
-        'routing' => RouteManagerFactory::class,
+    'services' => [
+        'routing' => RouteManager::class,
     ],
 ];
