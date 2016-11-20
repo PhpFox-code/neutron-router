@@ -1,8 +1,6 @@
 <?php
 namespace Phpfox\Router;
 
-use Phpfox\Mvc\App;
-
 /**
  * Class ProfileNameRoute
  *
@@ -15,8 +13,7 @@ class ProfileNameRoute extends StandardRoute
      */
     protected function filter(Result $result)
     {
-        $content = App::instance()->getEvent()
-            ->trigger('onFilterProfileNameRun', $result, null);
+        $content = events()->trigger('onFilterProfileNameRun', $result, null);
 
         if (!$content) {
             return false;
