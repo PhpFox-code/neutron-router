@@ -33,28 +33,22 @@ class RouteManager
      */
     private $temporary = [];
 
+    public function __construct()
+    {
+        $this->reset();
+    }
+
     /**
      * Start to build routing
      */
-    public function bound()
+    public function reset()
     {
-        $routing = \app()->cache()->get($cacheKey = 'platform_routing_start',
-            0);
-
-        if (!$routing) {
-
-            \app()->emit('onRoutingStart', $this);
-
-            $this->compileRoutes();
-
-            \app()->cache()->set($cacheKey,
-                serialize([$this->masters, $this->children, $this->indexes]),
-                0);
-
-        } else {
-            list($this->masters, $this->children, $this->indexes)
-                = unserialize($routing);
+        $routes = config('routes');
+        foreach ($routes as $name => $params) {
+            $this->add($name, $params);
         }
+        $this->compileRoutes();
+
     }
 
     /**
@@ -88,10 +82,13 @@ class RouteManager
         /**
          * add children
          */
-        foreach ($this->temporary['master'] as $name => $master) {
-            if (!empty($this->temporary['children'][$name])) {
-                $this->temporary['master'][$name]['children']
-                    = array_keys($this->temporary['children'][$name]);
+
+        if (!empty($this->temporary['master'])) {
+            foreach ($this->temporary['master'] as $name => $master) {
+                if (!empty($this->temporary['children'][$name])) {
+                    $this->temporary['master'][$name]['children']
+                        = array_keys($this->temporary['children'][$name]);
+                }
             }
         }
 
@@ -116,8 +113,11 @@ class RouteManager
         /**
          * Initial we create master rules
          */
-        foreach ($this->temporary['master'] as $name => $master) {
-            $this->masters[$master['name']] = $this->create($master);
+
+        if (!empty($this->temporary['master'])) {
+            foreach ($this->temporary['master'] as $name => $master) {
+                $this->masters[$master['name']] = $this->create($master);
+            }
         }
 
         if (!empty($this->temporary['children'])) {
@@ -230,11 +230,11 @@ class RouteManager
     }
 
     /**
-     * @param string $group
-     * @param string $uri
-     * @param string $host
-     * @param string $method
-     * @param Result $result
+     * @param string      $group
+     * @param string      $uri
+     * @param string      $host
+     * @param string      $method
+     * @param RouteResult $result
      *
      * @return bool
      */
@@ -262,12 +262,14 @@ class RouteManager
     }
 
     /**
-     * @param array $params Routing Params
+     * @param string $name
+     * @param array  $params Routing Params
      *
      * @return $this
      */
-    public function add($params)
+    public function add($name, $params)
     {
+        $params['name'] = $name;
         $arr = explode('/', $params['name'], 2);
 
         if (count($arr) == 2) {
@@ -323,11 +325,11 @@ class RouteManager
      * @param string $host
      * @param string $method
      *
-     * @return Result
+     * @return RouteResult
      */
     public function resolve($path, $host = null, $method = null)
     {
-        $result = new Result();
+        $result = new RouteResult();
         $matched = false;
 
         foreach ($this->masters as $name => $route) {
@@ -339,8 +341,8 @@ class RouteManager
         }
 
         if (!$matched) {
-            $result->setControllerName('Platform\Core\Controller\ErrorController');
-            $result->setActionName('page-not-found');
+            $result->setControllerName('Core\Controller\ErrorController');
+            $result->setActionName('404');
         }
 
         return $result;

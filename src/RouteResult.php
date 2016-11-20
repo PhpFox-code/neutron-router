@@ -2,11 +2,11 @@
 namespace Phpfox\Router;
 
 /**
- * Class Result
+ * Class RouteResult
  *
  * @package Phpfox\Router
  */
-class Result
+class RouteResult
 {
     /**
      * @var string
@@ -33,10 +33,13 @@ class Result
 
     /**
      * @param string $controllerName
+     *
+     * @return $this
      */
     public function setControllerName($controllerName)
     {
         $this->controllerName = $controllerName;
+        return $this;
     }
 
     /**
@@ -49,10 +52,13 @@ class Result
 
     /**
      * @param string $actionName
+     *
+     * @return $this
      */
     public function setActionName($actionName)
     {
         $this->actionName = $actionName;
+        return $this;
     }
 
     /**
@@ -68,6 +74,17 @@ class Result
      */
     public function setParams($params)
     {
-        $this->params = $params;
+        $this->params = [];
+        foreach ($params as $k => $v) {
+            if ($k == 'controller' || $k == 'controllerName') {
+                $this->controllerName = $v;
+            } else {
+                if ($k == 'action' || $k == 'actionName') {
+                    $this->actionName = $v;
+                } else {
+                    $this->params[$k] = $v;
+                }
+            }
+        }
     }
 }

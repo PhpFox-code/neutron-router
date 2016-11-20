@@ -99,6 +99,7 @@ class StandardRoute implements RouteInterface
         $expression = preg_replace('#' . '[.\\+*?[^\\]${}=!|]' . '#', '\\\\$0',
             $uri);
 
+
         if (strpos($expression, '(') !== false) {
             // Make optional parts of the URI non-capturing and optional
             $expression = str_replace(['(', ')',], ['(?:', ')?',], $expression);
@@ -266,15 +267,17 @@ class StandardRoute implements RouteInterface
             return false;
         }
 
-        if (\app()->routing()
-            ->resolveChildren($this->delegate, $uri, $host, $method, $result)
-        ) {
+
+        $check = service('routing')->resolveChildren($this->delegate, $uri,
+            $host, $method, $result);
+        if ($check) {
             return true;
         }
 
-        if (\app()->routing()
-            ->resolveChildren($this->name, $uri, $host, $method, $result)
-        ) {
+        $check = service('routing')->resolveChildren($this->name, $uri, $host,
+            $method, $result);
+
+        if ($check) {
             return true;
         }
 
@@ -282,11 +285,11 @@ class StandardRoute implements RouteInterface
     }
 
     /**
-     * @param Result $result
+     * @param RouteResult $result
      *
      * @return bool
      */
-    protected function filter(Result $result)
+    protected function filter(RouteResult $result)
     {
         if ($result) {
             ;

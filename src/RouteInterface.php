@@ -4,11 +4,11 @@ namespace Phpfox\Router;
 interface RouteInterface
 {
     /**
-     * @param string $uri
-     * @param string $host
-     * @param string $method
-     * @param Result $result
-     * @param bool   $is_children
+     * @param string      $uri
+     * @param string      $host
+     * @param string      $method
+     * @param RouteResult $result
+     * @param bool        $is_children
      *
      * @return mixed
      */

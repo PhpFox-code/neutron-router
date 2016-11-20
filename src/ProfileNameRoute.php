@@ -11,7 +11,7 @@ class ProfileNameRoute extends StandardRoute
     /**
      * @inheritdoc
      */
-    protected function filter(Result $result)
+    protected function filter(RouteResult $result)
     {
         $content = events()->trigger('onFilterProfileNameRun', $result, null);
 
