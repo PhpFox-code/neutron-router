@@ -4,6 +4,8 @@ namespace Phpfox\Router;
 
 return [
     'services' => [
-        'routing' => RouteManager::class,
+        'map' => [
+            'routing' => [null, RouteManager::class,],
+        ],
     ],
 ];
