@@ -9,16 +9,6 @@ namespace Phpfox\Router;
 class RouteResult
 {
     /**
-     * @var string
-     */
-    protected $controllerName;
-
-    /**
-     * @var string
-     */
-    protected $actionName;
-
-    /**
      * @var array
      */
     protected $params = [];
@@ -28,17 +18,17 @@ class RouteResult
      */
     public function getControllerName()
     {
-        return $this->controllerName;
+        return $this->getParam('controller');
     }
 
     /**
-     * @param string $controllerName
+     * @param string $value
      *
      * @return $this
      */
-    public function setControllerName($controllerName)
+    public function setControllerName($value)
     {
-        $this->controllerName = $controllerName;
+        $this->params['controller'] = $value;
         return $this;
     }
 
@@ -47,17 +37,17 @@ class RouteResult
      */
     public function getActionName()
     {
-        return $this->actionName;
+        return $this->getParam('action');
     }
 
     /**
-     * @param string $actionName
+     * @param string $value
      *
      * @return $this
      */
-    public function setActionName($actionName)
+    public function setActionName($value)
     {
-        $this->actionName = $actionName;
+        $this->params['action'] = $value;
         return $this;
     }
 
@@ -70,21 +60,55 @@ class RouteResult
     }
 
     /**
+     * This method clear old params and set by new params.
+     *
      * @param array $params
+     *
+     * @return $this
      */
     public function setParams($params)
     {
+        $this->params = $params;
+        return $this;
+    }
+
+    /**
+     * @param string     $key
+     * @param null|mixed $default
+     *
+     * @return mixed|null
+     */
+    public function getParam($key, $default = null)
+    {
+        return isset($this->params[$key]) ? $this->params[$key] : $default;
+    }
+
+    /**
+     * @param string $key
+     * @param mixed  $value
+     *
+     * @return $this
+     */
+    public function setParam($key, $value)
+    {
+        $this->params[$key] = $value;
+        return $this;
+    }
+
+    /**
+     * Reset old data
+     */
+    public function reset()
+    {
         $this->params = [];
-        foreach ($params as $k => $v) {
-            if ($k == 'controller' || $k == 'controllerName') {
-                $this->controllerName = $v;
-            } else {
-                if ($k == 'action' || $k == 'actionName') {
-                    $this->actionName = $v;
-                } else {
-                    $this->params[$k] = $v;
-                }
-            }
+    }
+
+    public function ensure()
+    {
+        if (null == $this->getControllerName()) {
+            $this->setControllerName('Core\Controller\ErrorController');
+            $this->setActionName('404');
         }
+        return $this;
     }
 }

@@ -3,9 +3,12 @@
 namespace Phpfox\Router;
 
 return [
-    'services' => [
-        'routing' => [null, RouteManager::class,],
+    'router.filters' => [
+        '@profile' => [null, ProfileNameFilter::class],
     ],
-    'events'   => [
+    'routes'         => [],
+    'services'       => [
+        'routing'        => [null, RouteManager::class,],
+        'router.filters' => [null, FilterContainer::class],
     ],
 ];

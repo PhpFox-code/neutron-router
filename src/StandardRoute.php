@@ -6,35 +6,30 @@ namespace Phpfox\Router;
 class StandardRoute implements RouteInterface
 {
     /**
-     * @var  string
-     */
-    protected $expression;
-
-    /**
-     * @var string
-     */
-    protected $name;
-
-    /**
      * regular methods
      */
     protected $methods;
+
     /**
      * @var  string  route URI
      */
-    protected $uri;
+    protected $route;
+
     /**
      * @var string
      */
     protected $host;
+
+    /**
+     * @var  string
+     */
+    protected $routeExpression;
+
     /**
      * @var array
      */
     protected $hostExpression = [];
-    /**
-     * @var string
-     */
-    protected $hostCompiledExpression;
+
     /**
      * @var string
      */
@@ -43,7 +38,7 @@ class StandardRoute implements RouteInterface
     /**
      * @var string
      */
-    protected $delegate;
+    protected $filter;
 
     /**
      * @var  array
@@ -55,32 +50,30 @@ class StandardRoute implements RouteInterface
      */
     public function __construct($params)
     {
-        $this->name = $params['name'];
-
-        if (isset($params['uri'])) {
-            $this->uri = $params['uri'];
+        if (!empty($params['filter'])) {
+            $this->filter = $params['filter'];
         }
 
-        if (isset($params['host'])) {
+        if (!empty($params['route'])) {
+            $this->route = $params['route'];
+        }
+
+        if (!empty($params['host'])) {
             $this->host = $params['host'];
         }
 
-        if (isset($params['defaults'])) {
+        if (!empty($params['defaults'])) {
             $this->defaults = $params['defaults'];
         }
 
-        if (!empty($params['delegate'])) {
-            $this->setDelegate($params['delegate']);
-        }
-
-        if ($this->uri) {
-            $this->expression = $this->compile($this->uri,
+        if ($this->route) {
+            $this->routeExpression = $this->compile($this->route,
                 isset($params['wheres']) ? $params['wheres'] : []);
         }
 
         if ($this->host) {
             $this->hostExpression = $this->compile($this->host,
-                isset($param['host_expr']) ? $params['host_expr'] : []);
+                isset($params['wheres']) ? $params['wheres'] : []);
         }
     }
 
@@ -122,11 +115,11 @@ class StandardRoute implements RouteInterface
     }
 
     /**
-     * @param string $expression
+     * @param string $routeExpression
      */
-    public function setExpression($expression)
+    public function setRouteExpression($routeExpression)
     {
-        $this->expression = $expression;
+        $this->routeExpression = $routeExpression;
     }
 
     /**
@@ -156,9 +149,9 @@ class StandardRoute implements RouteInterface
     /**
      * @return string
      */
-    public function getUri()
+    public function getRoute()
     {
-        return $this->uri;
+        return $this->route;
     }
 
     /**
@@ -177,52 +170,12 @@ class StandardRoute implements RouteInterface
         $this->defaults = $defaults;
     }
 
-    /**
-     * @return string
-     */
-    public function getDelegate()
+    public function match($uri, $host, $method, $protocol, &$result)
     {
-        return $this->delegate;
-    }
-
-    /**
-     * @param string $delegate
-     */
-    public function setDelegate($delegate)
-    {
-        $this->delegate = $delegate;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param string $name
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function resolve(
-        $uri,
-        $host = null,
-        $method = null,
-        $result,
-        $is_children = false
-    ) {
         $params = [];
 
         if ($host && $this->host) {
-            if (!preg_match($this->hostCompiledExpression, $host, $matches)) {
+            if (!preg_match($this->hostExpression, $host, $matches)) {
                 return false;
             }
 
@@ -235,8 +188,8 @@ class StandardRoute implements RouteInterface
             }
         }
 
-        if ($uri && $this->uri) {
-            if (!preg_match($this->expression, $uri, $matches)) {
+        if ($uri && $this->route) {
+            if (!preg_match($this->routeExpression, $uri, $matches)) {
                 return false;
             }
 
@@ -257,42 +210,23 @@ class StandardRoute implements RouteInterface
             }
         }
 
-        if (!$is_children) {
-            $result->setParams($params);
-        } else {
-            $result->addVars($params);
-        }
+        $result->setParams($params);
 
-        if (false == $this->filter($result)) {
-            return false;
-        }
+        if (null != $this->filter) {
+            if (is_string($this->filter)) {
+                if (!service('router.filters')->get($this->filter)
+                    ->filter($result)
+                ) {
+                    return false;
+                }
+            } elseif (is_array($this->filter)) {
+                foreach ($this->filter as $v) {
+                    if (!service('router.filters')->get($v)->filter($result)) {
+                        return false;
+                    }
+                }
+            }
 
-
-        $check = service('routing')->resolveChildren($this->delegate, $uri,
-            $host, $method, $result);
-        if ($check) {
-            return true;
-        }
-
-        $check = service('routing')->resolveChildren($this->name, $uri, $host,
-            $method, $result);
-
-        if ($check) {
-            return true;
-        }
-
-        return true;
-    }
-
-    /**
-     * @param RouteResult $result
-     *
-     * @return bool
-     */
-    protected function filter(RouteResult $result)
-    {
-        if ($result) {
-            ;
         }
         return true;
     }
@@ -308,9 +242,6 @@ class StandardRoute implements RouteInterface
      */
     public function getUrl($params = [])
     {
-        /**
-         * strict check
-         */
         if (!is_array($params)) {
             $params = [];
         }
@@ -384,18 +315,14 @@ class StandardRoute implements RouteInterface
             }, $portion);
 
             if ($required AND $missing) {
-                throw new \InvalidArgumentException("missing route param {'"
-                    . implode(',', $missing) . "'}");
+                $missing = implode(',', $missing);
+                throw new RouteException("Unexpected params {$missing}");
             }
 
-            return [
-                $result,
-                $usages,
-                $required,
-            ];
+            return [$result, $usages, $required,];
         };
 
-        list($uri, $usages) = $compile($this->uri, true, $usages);
+        list($uri, $usages) = $compile($this->route, true, $usages);
 
         $queryString = '';
         $query = array_diff_key($params, $usages);
@@ -434,33 +361,5 @@ class StandardRoute implements RouteInterface
     public function isExternal()
     {
         return isset($this->defaults['host']) && $this->defaults['host'];
-    }
-
-    /**
-     * @ignore
-     * @codeCoverageIgnore
-     *
-     * @param $tokens
-     *
-     * @return array
-     */
-    protected function correctTokensForChildRoute($tokens)
-    {
-
-        $result = [];
-
-        foreach ($tokens as $key => $value) {
-            $key = preg_replace('(\W+)', '', $key);
-            $value = '/' . trim($value, '/');
-            $key1 = '(/<' . $key . '>)';
-            $key2 = '/<' . $key . '>';
-
-
-            $result[$key1] = $value;
-            $result[$key2] = $value;
-
-        }
-
-        return $result;
     }
 }

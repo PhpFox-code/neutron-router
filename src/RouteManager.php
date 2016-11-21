@@ -14,25 +14,11 @@ class RouteManager
      *
      * @var RouteInterface[]
      */
-    private $masters = [];
+    protected $routes = [];
 
     /**
-     * Children router by name
-     *
-     * @var RouteInterface[]
+     * RouteManager constructor.
      */
-    private $children = [];
-
-    /**
-     * @var array
-     */
-    private $indexes = [];
-
-    /**
-     * @var array
-     */
-    private $temporary = [];
-
     public function __construct()
     {
         $this->reset();
@@ -43,163 +29,11 @@ class RouteManager
      */
     public function reset()
     {
+        $this->routes = [];
         $routes = config('routes');
-        foreach ($routes as $name => $params) {
-            $this->add($name, $params);
+        foreach ($routes as $k => $v) {
+            $this->routes[$k] = $this->build($v);
         }
-        $this->compileRoutes();
-
-    }
-
-    /**
-     * @ignore
-     */
-    public function compileRoutes()
-    {
-        $this->masters = [];
-        $this->children = [];
-
-        // clone delegate children data
-        if (!empty($this->temporary['delegate'])) {
-            foreach ($this->temporary['delegate'] as $name => $delegate) {
-                $combine = [];
-
-                if (!empty($this->temporary['children'][$name])) {
-                    $combine = $this->temporary['children'][$name];
-                }
-
-                if (!empty($this->temporary['children'][$delegate])) {
-                    $combine = array_merge($combine,
-                        $this->temporary['children'][$delegate]);
-
-                }
-                $this->temporary['children'][$name] = $combine;
-                $this->temporary['children'][$delegate] = $combine;
-            }
-        }
-
-
-        /**
-         * add children
-         */
-
-        if (!empty($this->temporary['master'])) {
-            foreach ($this->temporary['master'] as $name => $master) {
-                if (!empty($this->temporary['children'][$name])) {
-                    $this->temporary['master'][$name]['children']
-                        = array_keys($this->temporary['children'][$name]);
-                }
-            }
-        }
-
-        // re-merged all data for children
-
-        if (!empty($this->temporary['children'])) {
-            foreach ($this->temporary['children'] as $group => $children) {
-                if (empty($this->temporary['master'][$group])) {
-                    throw new \InvalidArgumentException(sprintf('Unexpected group "%s", Could not compile children',
-                        $group));
-                }
-                $master = $this->temporary['master'][$group];
-                foreach ($children as $name => $child) {
-                    $this->temporary['children'][$group][$name]
-                        = $this->correctChildData($child, $master);
-                    $this->indexes[$group][] = $group . '/' . $name;
-                }
-            }
-        }
-
-
-        /**
-         * Initial we create master rules
-         */
-
-        if (!empty($this->temporary['master'])) {
-            foreach ($this->temporary['master'] as $name => $master) {
-                $this->masters[$master['name']] = $this->create($master);
-            }
-        }
-
-        if (!empty($this->temporary['children'])) {
-            foreach ($this->temporary['children'] as $group => $children) {
-                foreach ($children as $name => $child) {
-                    $key = $group . '/' . $name;
-                    $this->children[$key] = $this->create($child);
-                }
-            }
-        }
-
-        unset($this->temporary);
-    }
-
-    /**
-     * @ignore
-     * @codeCoverageIgnore
-     *
-     * @param array $child
-     * @param array $parent
-     *
-     * @return array
-     */
-    protected function correctChildData($child, $parent)
-    {
-        if (empty($child['tokens'])) {
-            throw new \InvalidArgumentException(sprintf('Missing params "tokens"'));
-        }
-
-        $tokens = $this->correctTokensForChildRoute($child['tokens']);
-
-        unset($child['tokens']);
-
-        if (!empty($parent['protocol'])) {
-            $child['protocol'] = $parent['protocol'];
-        }
-
-        if (!empty($parent['uri'])) {
-            $child['uri'] = strtr($parent['uri'], $tokens);
-        }
-
-        if (!empty($parent['host'])) {
-            $child['host'] = strtr($parent['host'], $tokens);
-        }
-
-        if (!empty($parent['defaults'])) {
-            if (!empty($child['defaults'])) {
-                $child['defaults'] = array_merge($parent['defaults'],
-                    $child['defaults']);
-            } else {
-                $child['defaults'] = $parent['defaults'];
-            }
-        }
-
-        return $child;
-    }
-
-    /**
-     * @ignore
-     * @codeCoverageIgnore
-     *
-     * @param $tokens
-     *
-     * @return array
-     */
-    protected function correctTokensForChildRoute($tokens)
-    {
-        $result = [];
-
-        foreach ($tokens as $key => $value) {
-
-            $key = preg_replace('(\W+)', '', $key);
-            $value = '/' . trim($value, '/');
-
-            $key1 = '(/<' . $key . '>)';
-            $key2 = '/<' . $key . '>';
-
-            $result[$key1] = $value;
-            $result[$key2] = $value;
-        }
-
-        return $result;
     }
 
     /**
@@ -209,141 +43,87 @@ class RouteManager
      *
      * @return RouteInterface
      */
-    protected function create($params)
+    protected function build($params)
     {
-        $class = empty($params['class']) ? StandardRoute::class
-            : $params['class'];
+        if (empty($params['type'])) {
+            $params['type'] = StandardRoute::class;
+        }
 
-        return new $class($params);
+        return new $params['type']($params);
     }
 
     /**
      * has router
      *
-     * @param string $name
+     * @param string $id
      *
      * @return bool
      */
-    public function hasRoute($name)
+    public function has($id)
     {
-        return isset($this->masters[$name]);
+        return isset($this->routes[$id]);
     }
 
     /**
-     * @param string      $group
-     * @param string      $uri
-     * @param string      $host
-     * @param string      $method
-     * @param RouteResult $result
-     *
-     * @return bool
-     */
-    public function resolveChildren($group, $uri, $host, $method, $result)
-    {
-        if (empty($this->indexes[$group])) {
-            return false;
-        }
-
-        foreach ($this->indexes[$group] as $name) {
-
-            if (!isset($this->children[$name])) {
-                continue;
-            }
-
-            if ($this->children[$name]->resolve($uri, $host, $method, $result,
-                true)
-            ) {
-                return true;
-            }
-
-        }
-
-        return false;
-    }
-
-    /**
-     * @param string $name
-     * @param array  $params Routing Params
+     * @param string $id
+     * @param array  $params
      *
      * @return $this
      */
-    public function add($name, $params)
+    public function add($id, $params)
     {
-        $params['name'] = $name;
-        $arr = explode('/', $params['name'], 2);
-
-        if (count($arr) == 2) {
-            $params['name'] = $arr[1];
-            $this->temporary['children'][$arr[0]][$arr[1]] = $params;
-        } else {
-            $this->temporary['master'][$params['name']] = $params;
-        }
-
-        if (isset($params['delegate'])) {
-            $this->temporary['delegate'][$params['name']] = $params['delegate'];
-        }
+        $this->routes[$id] = $this->build($params);
 
         return $this;
     }
 
     /**
-     * @param string $name
+     * @param string $id
      * @param array  $params
      *
      * @return string
      */
-    public function getUrl($name, $params = [])
+    public function getUrl($id, $params = [])
     {
-        return $this->getRoute($name)->getUrl($params);
+        return $this->get($id)->getUrl($params);
     }
 
     /**
-     * @param  string $name
+     * @param  string $id
      *
      * @return RouteInterface
-     * @throws \InvalidArgumentException
+     * @throws RouteException
      */
-    public function getRoute($name)
+    public function get($id)
     {
-        if (isset($this->masters[$name])) {
-            return $this->masters[$name];
+        if (isset($this->routes[$id])) {
+            return $this->routes[$id];
         }
 
-
-        if (isset($this->children[$name])) {
-            return $this->children[$name];
-        }
-
-        throw new \InvalidArgumentException(sprintf('Unexpected route "%s"',
-            $name));
-
-
+        throw new RouteException("Unexpected route '{$id}'");
     }
 
     /**
      * @param string $path
      * @param string $host
      * @param string $method
+     * @param string $protocol
      *
      * @return RouteResult
      */
-    public function resolve($path, $host = null, $method = null)
+    public function resolve($path, $host, $method, $protocol)
     {
         $result = new RouteResult();
-        $matched = false;
 
-        foreach ($this->masters as $name => $route) {
-            if (!$route->resolve($path, $host, $method, $result, false)) {
+        foreach ($this->routes as $id => $route) {
+            if (!$route->match($path, $host, $method, $protocol, $result)) {
+                $result->reset();
                 continue;
             }
-            $matched = true;
             break;
         }
 
-        if (!$matched) {
-            $result->setControllerName('Core\Controller\ErrorController');
-            $result->setActionName('404');
-        }
+        $result->ensure();
 
         return $result;
     }

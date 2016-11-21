@@ -7,18 +7,12 @@ interface RouteInterface
      * @param string      $uri
      * @param string      $host
      * @param string      $method
+     * @param string      $protocol
      * @param RouteResult $result
-     * @param bool        $is_children
      *
-     * @return mixed
+     * @return bool
      */
-    public function resolve(
-        $uri,
-        $host = null,
-        $method = null,
-        $result,
-        $is_children = false
-    );
+    public function match($uri, $host, $method, $protocol, &$result);
 
     /**
      * @param array $params
