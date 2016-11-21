@@ -6,9 +6,10 @@ return [
     'router.filters' => [
         '@profile' => [null, ProfileNameFilter::class],
     ],
-    'routes'         => [],
+    'router.phrases' => [],
+    'router.routes'         => [],
     'services'       => [
-        'routing'        => [null, RouteManager::class,],
+        'router'        => [null, RouteManager::class,],
         'router.filters' => [null, FilterContainer::class],
     ],
 ];

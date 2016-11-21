@@ -17,10 +17,21 @@ class RouteManager
     protected $routes = [];
 
     /**
+     * @var array
+     */
+    protected $phrases = [];
+
+    /**
+     * @var string
+     */
+    protected $fallbackId;
+
+    /**
      * RouteManager constructor.
      */
     public function __construct()
     {
+        echo "create from constructor";
         $this->reset();
     }
 
@@ -30,7 +41,9 @@ class RouteManager
     public function reset()
     {
         $this->routes = [];
-        $routes = config('routes');
+        $routes = config('router.routes');
+        $this->phrases = config('router.phrases');
+
         foreach ($routes as $k => $v) {
             $this->routes[$k] = $this->build($v);
         }
@@ -48,6 +61,9 @@ class RouteManager
         if (empty($params['type'])) {
             $params['type'] = StandardRoute::class;
         }
+
+        $params['route'] = str_replace(['{', '}'], ['', ''],
+            strtr($params['route'], $this->phrases));
 
         return new $params['type']($params);
     }
@@ -100,6 +116,11 @@ class RouteManager
             return $this->routes[$id];
         }
 
+        // todo use production/development to control
+        if (null != $this->fallbackId) {
+            return $this->routes[$this->fallbackId];
+        }
+
         throw new RouteException("Unexpected route '{$id}'");
     }
 
@@ -126,5 +147,25 @@ class RouteManager
         $result->ensure();
 
         return $result;
+    }
+
+    /**
+     * Be careful that $fallbackId exists.
+     *
+     * @param string $fallbackId
+     */
+    public function setFallback($fallbackId)
+    {
+        $this->fallbackId = $fallbackId;
+    }
+
+    public function __sleep()
+    {
+        return ['routes', 'fallbackId'];
+    }
+
+    public function __wakeup()
+    {
+
     }
 }
