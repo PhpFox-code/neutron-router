@@ -21,8 +21,5 @@ class RouteManagerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($result);
 
-        var_dump($result);
     }
-
-
 }
