@@ -3,11 +3,11 @@
 namespace Phpfox\Router;
 
 /**
- * Class RouteManager
+ * Class RouteContainer
  *
  * @package Phpfox\Router
  */
-class RouteManager
+class RouteContainer
 {
     /**
      * router by name

@@ -9,7 +9,7 @@ return [
     'router.phrases' => [],
     'router.routes'         => [],
     'services'       => [
-        'router'        => [null, RouteManager::class,],
+        'router'        => [null, RouteContainer::class,],
         'router.filters' => [null, FilterContainer::class],
     ],
 ];
