@@ -1,11 +1,11 @@
 <?php
 
-namespace Phpfox\Router;
+namespace Neutron\Router;
 
 /**
  * Class RouteContainer
  *
- * @package Phpfox\Router
+ * @package Neutron\Router
  */
 class RouteContainer
 {

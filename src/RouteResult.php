@@ -1,10 +1,10 @@
 <?php
-namespace Phpfox\Router;
+namespace Neutron\Router;
 
 /**
  * Class RouteResult
  *
- * @package Phpfox\Router
+ * @package Neutron\Router
  */
 class RouteResult
 {

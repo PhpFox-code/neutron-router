@@ -1,6 +1,6 @@
 <?php
 
-namespace Phpfox\Router;
+namespace Neutron\Router;
 
 
 class RouteManagerTest extends \PHPUnit_Framework_TestCase

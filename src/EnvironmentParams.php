@@ -1,11 +1,11 @@
 <?php
-namespace Phpfox\Router;
+namespace Neutron\Router;
 
 /**
  * Todo implement EnvironmentParams
  * - Use `Fail-over - Retry` pattern.
  *
- * @package Phpfox\Router
+ * @package Neutron\Router
  */
 class EnvironmentParams
 {

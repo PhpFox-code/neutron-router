@@ -1,6 +1,6 @@
 <?php
 
-namespace Phpfox\Router;
+namespace Neutron\Router;
 
 
 class ProfileNameFilter implements FilterInterface
