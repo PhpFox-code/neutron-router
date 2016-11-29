@@ -1,5 +1,5 @@
 {
-  "name": "codelego/phpfox-router",
+  "name": "codelego/neutron-router",
   "description": "Router library for phpfox framework",
   "type": "library",
   "license": "MIT",
